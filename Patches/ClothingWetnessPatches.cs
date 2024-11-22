@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MelonLoader;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -51,7 +52,7 @@ namespace ImprovedClothing.Patches
                         }
                         else
                         {   //if there are holes in your boots, your socks are getting wet, but only a little bit. depends on condition
-                            if (footwear.GetNormalizedCondition() < 0.8f) wetSocks(wetnessAmount / footwear.GetNormalizedCondition(), sockInner, sockOuter);
+                            if (footwear.GetNormalizedCondition() < 0.65f) wetSocks(wetnessAmount / footwear.GetNormalizedCondition(), sockInner, sockOuter);
                         }
 
                         //wetness on footwear from simply walking in snow should not exceed a certain amount
@@ -100,10 +101,11 @@ namespace ImprovedClothing.Patches
                 else if (gi.name.Contains("SkiBoots") && slope >= 25f) chance = 1f;
                 else if (gi.name.Contains("WorkBoots") && slope >= 15f) chance = 10f;
                 else if (gi.name.Contains("DeerSkinBoots") && slope >= 30f) chance = 0.2f;
-                else if (gi.name.Contains("InsulatedBoots") && slope >= 20f) chance = 0.5f;
+                else if (gi.name.Contains("InsulatedBoots") && slope >= 25f) chance = 0.35f;
                 else chance = 0f;
 
                 //maybe check for snow pants here
+                if (GameManager.GetPlayerManagerComponent().GetClothingInSlot(ClothingRegion.Legs, ClothingLayer.Top2).name.Contains("InsulatedPants")) chance /= 1.5f;
 
                 return chance;
             }
