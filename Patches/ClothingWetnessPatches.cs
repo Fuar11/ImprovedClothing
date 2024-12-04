@@ -1,10 +1,10 @@
-﻿using MelonLoader;
+﻿using Il2Cpp;
+using MelonLoader;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Unity.VisualScripting;
 using Random = System.Random;
 
 namespace ImprovedClothing.Patches
@@ -90,7 +90,6 @@ namespace ImprovedClothing.Patches
 
             private static float getOverflowChance(GearItem gi)
             {
-
                 float chance;
                 float slope = Il2Cpp.Utils.CalculateSlopeUnderPosition(GameManager.GetPlayerTransform().position, 2048);
 
@@ -105,7 +104,11 @@ namespace ImprovedClothing.Patches
                 else chance = 0f;
 
                 //maybe check for snow pants here
-                if (GameManager.GetPlayerManagerComponent().GetClothingInSlot(ClothingRegion.Legs, ClothingLayer.Top2).name.Contains("InsulatedPants")) chance /= 1.5f;
+                GearItem pants = GameManager.GetPlayerManagerComponent().GetClothingInSlot(ClothingRegion.Legs, ClothingLayer.Top2);
+                if (pants != null)
+                {
+                    if (pants.name.Contains("InsulatedPants")) chance /= 1.5f;
+                } 
 
                 return chance;
             }
