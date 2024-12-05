@@ -4,7 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Il2Cpp;
+using Il2CppRewired.Utils.Platforms.Windows;
 using MelonLoader;
+using static Il2CppSystem.Linq.Expressions.Interpreter.CastInstruction.CastInstructionNoT;
+using static Il2CppSystem.Xml.Schema.FacetsChecker.FacetsCompiler;
 
 namespace ImprovedClothing
 {
@@ -31,7 +34,5 @@ namespace ImprovedClothing
             else if (pm.GetClothingInSlot(clothingRegion, ClothingLayer.Mid)) return pm.GetClothingInSlot(clothingRegion, ClothingLayer.Mid);
             else return pm.GetClothingInSlot(clothingRegion, ClothingLayer.Base);
         }
-
-
     }
 }
