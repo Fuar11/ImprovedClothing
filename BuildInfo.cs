@@ -11,11 +11,11 @@
         /// <summary>Who made the mod</summary>
         public const string Author                          = "Fuar";
         /// <summary>Current version (Using Major.Minor.Build) </summary>
-        public const string Version                         = "1.2.1";
+        public const string Version                         = "1.2.2";
         /// <summary>Name used on GUI's, like ModSettings</summary>
         public const string GUIName                         = "Improved Clothing";
         /// <summary>The minimum Melon Loader version that your mod requires</summary>
-        public const string MelonLoaderVersion              = "0.6.6";
+        //public const string MelonLoaderVersion              = "0.7.2";
         #endregion
 
         #region Optional
