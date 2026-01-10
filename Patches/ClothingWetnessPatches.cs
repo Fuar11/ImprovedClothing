@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 using Random = System.Random;
 
 namespace ImprovedClothing.Patches
@@ -20,10 +21,11 @@ namespace ImprovedClothing.Patches
             public static void Postfix(FootStepSounds __instance)
             {
 
-                string standingOn = __instance.GetMaterialTagForLastFootstep().ToLowerInvariant();
-
-                wetFootwear(standingOn);
-
+                if (Settings.settings.enableWetnessFootstep)
+                {
+                    string standingOn = __instance.GetMaterialTagForLastFootstep().ToLowerInvariant();
+                    wetFootwear(standingOn);
+                }
             }
 
             private static void wetFootwear(string standingOn)
@@ -37,13 +39,11 @@ namespace ImprovedClothing.Patches
 
                 bool wearingFootwear = footwear != null ? true : false;
                 float overflowAmount = wearingFootwear ? getOverflowChance(footwear) : 0f;
-
+                
+                float wetnessAmount = 0.15f * (Settings.settings.footstepWetnessMult / 100f);
                 //walking through snow
                 if (standingOn.Contains("snow"))
                 {
-
-                    float wetnessAmount = 0.15f;
-
                     if (wearingFootwear)
                     {
                         if (Il2Cpp.Utils.RollChance(overflowAmount))
@@ -52,7 +52,14 @@ namespace ImprovedClothing.Patches
                         }
                         else
                         {   //if there are holes in your boots, your socks are getting wet, but only a little bit. depends on condition
-                            if (footwear.GetNormalizedCondition() < 0.65f) wetSocks(wetnessAmount / footwear.GetNormalizedCondition(), sockInner, sockOuter);
+                            if (footwear.GetNormalizedCondition() < Settings.settings.footstepWetnessSeepThreshold / 100f) 
+                            { 
+                                wetSocks(
+                                    wetnessAmount 
+                                    / Math.Clamp(footwear.GetNormalizedCondition() - (Settings.settings.footstepWetnessSeepThreshold/100f) + 1.0f, 0.01f, 1.0f)
+                                    * Settings.settings.footstepWetnessMultSockSeep / 100f, 
+                                    sockInner, sockOuter); 
+                            }
                         }
 
                         //wetness on footwear from simply walking in snow should not exceed a certain amount
@@ -78,7 +85,12 @@ namespace ImprovedClothing.Patches
                 {
                     if (wearingFootwear)
                     {
-                        if (footwear.m_ClothingItem.m_PercentWet <= getMaxWetnessAmountByCondition(footwear, 10f)) footwear.m_ClothingItem.IncreaseWetnessPercent(0.1f);
+                        if (footwear.m_ClothingItem.m_PercentWet <= getMaxWetnessAmountByCondition(footwear, 10f))
+                        {
+                            footwear.m_ClothingItem.IncreaseWetnessPercent(
+                                wetnessAmount * Settings.settings.footstepWetnessMultIce / 100f
+                            );
+                        }
                     }
                     else
                     {
@@ -92,6 +104,7 @@ namespace ImprovedClothing.Patches
             {
                 float chance;
                 float slope = Il2Cpp.Utils.CalculateSlopeUnderPosition(GameManager.GetPlayerTransform().position, 2048);
+                // slope is a float degree value. Shallow ~ 0-20f, Steep ~ 20-40f
 
                 if (gi == null) return 0f;
                 if (gi.name.ToLowerInvariant().Contains("shoe") && slope >= 5f) chance = 70f;
@@ -128,13 +141,14 @@ namespace ImprovedClothing.Patches
                 else amount = 25f;
 
                 if (forcedAmount > 0) amount = forcedAmount;
-
-                return amount /= footwear.GetNormalizedCondition();
+                amount /= Math.Clamp(footwear.GetNormalizedCondition() - (Settings.settings.footstepWetnessCapThreshold/100f) + 1.0f, 0.01f, 1.0f);
+                amount *= Settings.settings.footstepWetnessCapMult / 100f;
+                return amount;
             }
             public static void wetSocks(float amount, GearItem sockInner, GearItem sockOuter, bool overflow = false)
             {
                 float sockWetAmount = amount;
-                if(overflow) sockWetAmount *= 2f;
+                if(overflow) sockWetAmount *= 2f * Settings.settings.footstepWetnessMultSockOverflow / 100f;
 
                 //wet socks
                 if (sockOuter != null)
@@ -160,22 +174,23 @@ namespace ImprovedClothing.Patches
 
             public static void Postfix(PlayerStruggle __instance)
             {
-
-
-                string standingOn = GameManager.GetFootStepSoundsComponent().GetMaterialTagForLastFootstep().ToLowerInvariant();
-
-                if (standingOn.Contains("snow"))
+                if (Settings.settings.enableWetnessStruggle)
                 {
+                    string standingOn = GameManager.GetFootStepSoundsComponent().GetMaterialTagForLastFootstep().ToLowerInvariant();
 
-                    GearItem outerCoat = Utils.getOutermostClothingItemByArea(ClothingRegion.Chest);
-                    GearItem outerHat = Utils.getOutermostClothingItemByArea(ClothingRegion.Head);
-                    GearItem outerPants = Utils.getOutermostClothingItemByArea(ClothingRegion.Legs);
-                    GearItem gloves = Utils.getOutermostClothingItemByArea(ClothingRegion.Hands);
+                    if (standingOn.Contains("snow"))
+                    {
 
-                    if (outerCoat != null) outerCoat.m_ClothingItem.IncreaseWetnessPercent(generateRandomWetnessAmount(outerCoat));
-                    if (outerHat != null) outerHat.m_ClothingItem.IncreaseWetnessPercent(generateRandomWetnessAmount(outerHat));
-                    if (outerPants != null) outerPants.m_ClothingItem.IncreaseWetnessPercent(generateRandomWetnessAmount(outerPants));
-                    if (gloves != null) gloves.m_ClothingItem.IncreaseWetnessPercent(generateRandomWetnessAmount(gloves));
+                        GearItem outerCoat = Utils.getOutermostClothingItemByArea(ClothingRegion.Chest);
+                        GearItem outerHat = Utils.getOutermostClothingItemByArea(ClothingRegion.Head);
+                        GearItem outerPants = Utils.getOutermostClothingItemByArea(ClothingRegion.Legs);
+                        GearItem gloves = Utils.getOutermostClothingItemByArea(ClothingRegion.Hands);
+
+                        if (outerCoat != null) outerCoat.m_ClothingItem.IncreaseWetnessPercent(generateRandomWetnessAmount(outerCoat));
+                        if (outerHat != null) outerHat.m_ClothingItem.IncreaseWetnessPercent(generateRandomWetnessAmount(outerHat));
+                        if (outerPants != null) outerPants.m_ClothingItem.IncreaseWetnessPercent(generateRandomWetnessAmount(outerPants));
+                        if (gloves != null) gloves.m_ClothingItem.IncreaseWetnessPercent(generateRandomWetnessAmount(gloves));
+                    }
                 }
 
             }
@@ -231,7 +246,7 @@ namespace ImprovedClothing.Patches
             public static void Prefix(ref float wetnessPercentIncrease, ClothingItem __instance)
             {
                 float condition = __instance.m_GearItem.GetNormalizedCondition();
-                wetnessPercentIncrease /= condition;
+                wetnessPercentIncrease = Settings.settings.enableWetnessCondition ? wetnessPercentIncrease / condition : wetnessPercentIncrease;
             }
 
         }
